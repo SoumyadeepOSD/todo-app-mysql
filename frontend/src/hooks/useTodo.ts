@@ -141,9 +141,11 @@ const useTodo = () => {
                 status: status,
                 creationDateTime:creationDateTime,
                 updationDateTime:updationDateTime,
+                priority:priority,
                 labels:labels,
-                priority:priority
             };
+            console.log("I am from labels dept.", labels);
+            
             console.log("I am from useTodo", payloadBody);
             
             const response = await axios.patch(URL, payloadBody,
@@ -174,6 +176,8 @@ const useTodo = () => {
             });
         }
     };
+
+
 
     const deleteTodo = async ({todoId}:{todoId:number}) => {
         setLoading(true);

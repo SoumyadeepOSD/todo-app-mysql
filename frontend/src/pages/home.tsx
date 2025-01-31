@@ -138,7 +138,7 @@ const Home = () => {
     console.log("New Status:", newStatus);
 
     // Find the dragged task
-    const taskToUpdate = todoList.find((task) => task.id === taskId);
+    const taskToUpdate:any = todoList.find((task) => task.id === taskId);
 
     if (!taskToUpdate) return; // If task not found, exit
     if (taskToUpdate.status === newStatus) {
@@ -159,7 +159,7 @@ const Home = () => {
         todoId: taskId,
         creationDateTime: taskToUpdate.creationDateTime,
         updationDateTime: new Date(new Date()).toString(),
-        labels: taskToUpdate.labels?.map((e) => +e.id!),
+        labels: taskToUpdate.labels,
         priority: taskToUpdate.priority
       });
     } catch (error) {
@@ -223,7 +223,7 @@ const Home = () => {
         <Button onClick={handleLogout} className="text-xs font-semibold text-white">Logout</Button>
       </div>
 
-
+      {/* <h1 className="text-white">hdff</h1> */}
       {todoList.length + 1 && fetchLabels.length + 1 &&
         (
           <div className="flex flex-col items-center justify-start border-2 border-slate-500 rounded-lg h-[85%] px-5">
@@ -255,7 +255,7 @@ const Home = () => {
               </Sheet>
 
               <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-                <AlertDialogTrigger>
+                <AlertDialogTrigger disabled={fetchedLabels.length<=0}>
                   <div className="flex flex-row gap-1 items-center justify-between text-white hover:animate-pulse text-sm">
                     <p className="text-xs">Create</p>
                     <PlusCircle color="white" size={20} />
@@ -277,6 +277,7 @@ const Home = () => {
                 <Input
                   placeholder={`Search todos...`}
                   value={query.qParam}
+                  disabled={todoList.length===0}
                   onChange={(e) => {
                     setQuery((prev) => ({
                       ...prev,
@@ -285,7 +286,7 @@ const Home = () => {
                   }}
                 />
                 <Select onValueChange={(e) => { setOption(e); }}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger disabled={todoList.length<=0} className="w-[180px]">
                     <SelectValue placeholder="Filter" onChange={(e) => { console.log(e.currentTarget.textContent); }} />
                   </SelectTrigger>
                   <SelectContent >
@@ -372,7 +373,8 @@ const Home = () => {
               </div>
             </div>
             <div className="flex flex-row items-start justify-between gap-10 w-full">
-              <DndContext onDragEnd={handleDragEnd}>
+              {todoList.length > 0 ? 
+              (<DndContext onDragEnd={handleDragEnd}>
                 {COLUMNS.map((column) => (
                   <TodoSection
                     key={column.id}
@@ -382,7 +384,13 @@ const Home = () => {
                     onDeleteSuccess={handleDeleteSuccess}
                   />
                 ))}
-              </DndContext>
+              </DndContext>):
+              (
+                <div className="text-lg text-white font-semibold flex flex-col items-center w-full">
+                  <h2>No todos are there</h2>
+                  <h2 className="text-xs font-semibold text-white">Create new one</h2>
+                </div>
+              )}
             </div>
           </div>
         )}

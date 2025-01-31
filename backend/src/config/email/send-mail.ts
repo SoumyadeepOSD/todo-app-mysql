@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { Job } from "bullmq";
-const emailWorker = require("../queue/worker");
+// const emailWorker = require("../queue/worker");
 require("dotenv").config();
 
 interface emailType {
@@ -39,18 +39,18 @@ const sendEmail = async ({ to, sub, token }: emailType) => {
     console.log("Email sent");
 };
 
-emailWorker.on('completed', (job: Job) => {
-    console.log(`Job ${job.id} completed successfully.`);
-});
+// emailWorker.on('completed', (job: Job) => {
+//     console.log(`Job ${job.id} completed successfully.`);
+// });
 
-emailWorker.on('failed', (job: any, failedReason: any) => {
-    console.log(`Job ${job.id} failed due to ${failedReason}`);
-});
+// emailWorker.on('failed', (job: any, failedReason: any) => {
+//     console.log(`Job ${job.id} failed due to ${failedReason}`);
+// });
 
-// Optionally, handle worker's error
-emailWorker.on('error', (error: Error) => {
-    console.error('Worker encountered an error:', error);
-});
+// // Optionally, handle worker's error
+// emailWorker.on('error', (error: Error) => {
+//     console.error('Worker encountered an error:', error);
+// });
 
 
 export default sendEmail;

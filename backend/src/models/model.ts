@@ -68,6 +68,11 @@ const Todo = SEQUELIZE.define(
             type: DataTypes.INTEGER,
             allowNull: false,
         },
+        labels: {
+            type: DataTypes.JSON,
+            allowNull: true,
+            defaultValue: [], 
+        },
         userId: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -109,13 +114,10 @@ const Label = SEQUELIZE.define(
 );
 
 // Define associations
-User.hasMany(Todo, { foreignKey: "userId" });
-User.hasMany(Label, { foreignKey: "userId" });
-Todo.belongsTo(User, { foreignKey: "userId" });
-Label.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(Todo, {foreignkey:"userId", onDelete:"CASCADE"});
+Todo.belongsTo(User,{foreignKey:"userId"});
 
-// Many-to-Many relationship between Todo and Label
-Todo.belongsToMany(Label, { through: "TodoLabels" });
-Label.belongsToMany(Todo, { through: "TodoLabels" });
+User.hasMany(Label, {foreignkey:"userId", onDelete:"CASCADE"});
+Label.belongsTo(User,{foreignKey:"userId"});
 
 export { User, Todo, Label };

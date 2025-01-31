@@ -1,20 +1,17 @@
+import bcryptJS from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { User } from "../models/model";
-
-const { PrismaClient } = require("@prisma/client");
-const jwt = require("jsonwebtoken");
-const bcryptJS = require("bcryptjs");
-const { addEmailToQueue } = require("../config/queue/producer");
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
+const JWT_SECRET:any = process.env.JWT_SECRET!;
+const JWT_REFRESH_SECRET:any = process.env.JWT_REFRESH_SECRET!;
 const REFRESH_TOKEN_EXPIRATION = "24h";
 const ACCESS_TOKEN_EXPIRATION = "1h";
 
-
-const JWT_RESET_SECRET = process.env.JWT_RESET_SECRET;
+const JWT_RESET_SECRET:any = process.env.JWT_RESET_SECRET!;
 const RESET_TOKEN_EXPIRATION = "1h";
 
 
 
+// ~User Login 
 const userLoginHandler = async (req: any, h: any) => {
     const { email, password } = req.payload;
 
@@ -49,7 +46,7 @@ const userLoginHandler = async (req: any, h: any) => {
         let newAccessToken;
         if (existingUser.refreshToken) {
             try {
-                const verifiedToken = jwt.verify(existingUser.refreshToken, JWT_REFRESH_SECRET);
+                const verifiedToken:any = jwt.verify(existingUser.refreshToken, JWT_REFRESH_SECRET);
                 // Step 5a: Generate a new access token from a valid refresh token
                 newAccessToken = jwt.sign(
                     { id: verifiedToken.id, email: verifiedToken.email },
@@ -108,29 +105,7 @@ const userLoginHandler = async (req: any, h: any) => {
 
 
 
-const tokenValidHandler = async (req: any, h: any) => {
-    try {
-        const authHeader = req.headers.authorization;
-        const { tokenType } = req.params;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return h.response({
-                message: "Missing or invalid Authorization header",
-            }).code(400);
-        }
-        const token = authHeader.split(" ")[1];
-        const decoded = jwt.verify(token, tokenType === "refresh" ? JWT_REFRESH_SECRET : JWT_SECRET); // Ensures expiration is checked
-        console.log(decoded);
-        return h.response({
-            data: decoded
-        });
-    } catch (error) {
-        return h.response({
-            message: "Invalid token",
-        }).code(401);
-    }
-};
-
-
+// ~User Signup
 const userSignupHandler = async (req: any, h: any) => {
     const { firstName, lastName, email, password } = req.payload;
     try {
@@ -196,6 +171,30 @@ const userSignupHandler = async (req: any, h: any) => {
 }
 
 
+// ~Token i.e sent to email will be validated
+const tokenValidHandler = async (req: any, h: any) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const { tokenType } = req.params;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return h.response({
+                message: "Missing or invalid Authorization header",
+            }).code(400);
+        }
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, tokenType === "refresh" ? JWT_REFRESH_SECRET : JWT_SECRET); // Ensures expiration is checked
+        console.log(decoded);
+        return h.response({
+            data: decoded
+        });
+    } catch (error) {
+        return h.response({
+            message: "Invalid token",
+        }).code(401);
+    }
+};
+
+// ~User forgot password
 const userForgotPasswordHandler = async (req: any, h: any) => {
     const { email } = req.payload;
     try {
@@ -222,7 +221,7 @@ const userForgotPasswordHandler = async (req: any, h: any) => {
                 },
             },
         );
-        await addEmailToQueue(email, "Password Reset Request", updatedUser.resetToken!);
+        // await addEmailToQueue(email, "Password Reset Request", updatedUser.resetToken!);
         return h.response({
             message: "Successfully generated reset token",
             resetToken: updatedUser.resetToken!
@@ -235,7 +234,7 @@ const userForgotPasswordHandler = async (req: any, h: any) => {
     }
 }
 
-
+// ~Resend token handler
 const userResetTokenHandler = async (req: any, h: any) => {
     try {
         const { token } = req.query; // Retrieve token from query params
@@ -267,12 +266,12 @@ const userResetTokenHandler = async (req: any, h: any) => {
     }
 };
 
-
+// ~Reset password
 const userResetPasswordHandler = async (req: any, h: any) => {
     try {
         const { password } = req.payload;
         const { token } = req.query;
-        const decoded = jwt.verify(token, JWT_RESET_SECRET);
+        const decoded:any = jwt.verify(token, JWT_RESET_SECRET);
         if (!decoded) {
             return h.response({
                 message: "Token expired or invalid token"
@@ -304,7 +303,7 @@ const userResetPasswordHandler = async (req: any, h: any) => {
     }
 }
 
-
+// ~Delete specific user
 const userDeleteHandler = async (req: any, h: any) => {
     const { id } = req.payload;
     try {
@@ -336,8 +335,7 @@ const userDeleteHandler = async (req: any, h: any) => {
     }
 }
 
-
-
+// ~Fetch all the users
 const fetchAllUsersHandler = async (req: any, h: any) => {
     try {
         const allUsers = await User.findAll();

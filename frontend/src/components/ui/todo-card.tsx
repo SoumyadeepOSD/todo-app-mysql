@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "./input";
 import useTodo from "@/hooks/useTodo";
 import { toast } from "@/hooks/use-toast";
-import { LabelsType, TasksType } from "@/constants/types/todo-type";
+import { TasksType } from "@/constants/types/todo-type";
 import { useDraggable } from "@dnd-kit/core";
 import {
   AlertDialog,
@@ -41,6 +41,7 @@ const TodoCard = ({ task, onTodoChange, onDeleteSuccess }: { task: TasksType, on
   const descInputRef = useRef<HTMLInputElement>(null);
   const priorities = [1, 2, 3, 4];
 
+  
   const { attributes, listeners, setNodeRef, transform } = useDraggable(
     {
       id: task.id!,
@@ -82,7 +83,8 @@ const TodoCard = ({ task, onTodoChange, onDeleteSuccess }: { task: TasksType, on
     }
   }
 
-  async function handleKeyPress(e: React.KeyboardEvent, title: string, description: string, status: string, tododId: number, type: string, creationDateTime: string, updationDateTime: string, labels: LabelsType[], priority: number) {
+  async function handleKeyPress(e: React.KeyboardEvent, title: string, description: string, status: string, tododId: number, type: string, creationDateTime: string, updationDateTime: string, labels: any[], priority: number) {
+    console.log(labels);
     if (e.key === "Enter") {
       try {
         await editTodo({
@@ -92,7 +94,7 @@ const TodoCard = ({ task, onTodoChange, onDeleteSuccess }: { task: TasksType, on
           todoId: tododId,
           creationDateTime: creationDateTime,
           updationDateTime: updationDateTime,
-          labels: labels?.map((e) => e.id!),
+          labels: labels,
           priority: priority
         });
         handleBlur(type);
@@ -123,11 +125,11 @@ const TodoCard = ({ task, onTodoChange, onDeleteSuccess }: { task: TasksType, on
   };
 
 
-  const handleSelect = async ({ labels, tododId }: { labels: LabelsType[], tododId: number }) => {
+  const handleSelect = async ({ labels, tododId }: { labels: any[], tododId: number }) => {
     try {
       await editTodo({
         ...task,
-        labels: labels?.map((e) => e.id!),
+        labels: labels,
         todoId: tododId,
         priority: newPriority,
       });

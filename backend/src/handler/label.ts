@@ -1,8 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-const Prisma = new PrismaClient();
 import { Label } from "../models/model";
-import { Op, fn, col } from "sequelize";
-import Sequelize from "sequelize";
 
 const labelCreateHandler = async (req: any, h: any) => {
     try {
@@ -137,7 +133,6 @@ const labelDeleteHandler = async (req: any, h: any) => {
     }
 
 }
-
 
 
 export {

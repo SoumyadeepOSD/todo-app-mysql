@@ -1,35 +1,48 @@
-import { Todo } from "../models/model";
+import { Label, Todo, User } from "../models/model";
 import { Op } from "sequelize";
+
+
 const todoCreateHandler = async (req: any, h: any) => {
     try {
-        const { title, description, status, creationDateTime, updationDateTime, priority, labels } = req.payload;
+        const { 
+            creationDateTime, 
+            updationDateTime, 
+            description, 
+            priority, 
+            status, 
+            labels, // This should be an array of label IDs
+            title, 
+        } = req.payload;
         const userId = req.auth.userId;
 
-        // Prepare label associations
-        const labelConnections = labels?.map((labelId: number) => ({ id: labelId })) || [];
-
         // Create a new Todo
-        const newTodo = await Todo.create(
-            {
-                title: title,
-                description: description,
-                status: status,
-                userId: userId,
-                creationDateTime: creationDateTime,
-                updationDateTime: updationDateTime,
-                priority: priority,
-                labels: {
-                    connect: labelConnections, // Use the `connect` keyword to link existing labels
-                },
-                include: {
-                    labels: true, // Include labels in the response
-                },
-            });
+        const newTodo = await Todo.create({
+            title,
+            description,
+            status,
+            userId,
+            creationDateTime,
+            updationDateTime,
+            priority,
+            labels
+        });
+
+        // Link existing labels to the new Todo
+        if (labels && labels.length > 0) {
+            await newTodo.setLabels(labels); // Sequelize's built-in method for Many-to-Many
+        }
+
+        // Fetch the created Todo with associated labels
+        const createdTodo = await Todo.findByPk(newTodo.id, {
+            include: {
+                model: Label, // Ensure Label is the correct Sequelize model
+            },
+        });
 
         return h.response({
             message: "Successfully created new Todo",
-            todo: newTodo
-        }).code(201); // Use 201 for resource creation
+            todo: createdTodo
+        }).code(201);
 
     } catch (error: any) {
         console.error(error);
@@ -47,7 +60,6 @@ const todoReadHandler = async (req: any, h: any) => {
 
     try {
         let whereClause: any = { userId };
-
         if (start) {
             // Add one day to the start date
             const parsedStart = new Date(new Date(start));
@@ -83,21 +95,20 @@ const todoReadHandler = async (req: any, h: any) => {
             whereClause.priority = +priority;
         }
 
-        // if (category != "-1" || isNaN(category)) {
-        //     const categoryId = +category; // Ensure category is a number
-        //     if (typeof (categoryId) === "number")
-        //         whereClause.labels = {
-        //             some: {
-        //                 id: categoryId, // Match category with label id
-        //             },
-        //         };
-        // }
+        if (category != "-1" || isNaN(category)) {
+            const categoryId = +category; // Ensure category is a number
+            if (typeof (categoryId) === "number")
+                whereClause.labels = {
+                    some: {
+                        id: categoryId, // Match category with label id
+                    },
+                };
+        }
 
         console.log("Final Where Clause:", whereClause);
 
         const allTodos = await Todo.findAll({
             where: whereClause,
-            // include: { labels: true },
             order: [
                 ['id', 'DESC']
             ],
@@ -120,7 +131,6 @@ const todoReadHandler = async (req: any, h: any) => {
 
 
 
-
 const todoUpdateHandler = async (req: any, h: any) => {
     const { todoId } = req.params;
     const userId = req.auth.userId;
@@ -129,36 +139,30 @@ const todoUpdateHandler = async (req: any, h: any) => {
     try {
         // Check if the Todo exists and belongs to the user
         const existingTodo = await Todo.findOne({
-            where: { id: todoId },
-            include: { user: true },
+            where: { id: todoId, userId: userId }, // Ensure the user owns the todo
         });
 
-        if (!existingTodo || existingTodo.userId !== userId) {
+        if (!existingTodo) {
             return h.response({
                 message: "Todo can't be updated as it does not exist or does not belong to this user",
-            }).code(401);
+            }).code(403); // Use 403 for forbidden access
         }
 
         // Update the Todo fields
-        const updatedTodo = await Todo.update(
-            {
-                title: title,
-                description: description,
-                status: status,
-                updationDateTime: updationDateTime,
-                creationDateTime: creationDateTime,
-                priority: priority,
-                labels: {
-                    set: labels.map((labelId: number) => ({ id: labelId })), // Clear existing and set new labels
-                },
-            },
-            { where: { id: todoId } },
-        );
+        await existingTodo.update({
+            title,
+            description,
+            status,
+            updationDateTime,
+            creationDateTime,
+            priority,
+            ...(labels !== undefined && { labels }), // Update labels only if provided
+        });
 
         return h.response({
             message: "Successfully updated the todo",
-            todo: updatedTodo,
-        }).code(200); // Use 200 for successful updates
+            todo: existingTodo, // ✅ No need for extra DB query
+        }).code(200);
 
     } catch (error: any) {
         console.error(error);
@@ -168,6 +172,7 @@ const todoUpdateHandler = async (req: any, h: any) => {
         }).code(500);
     }
 };
+
 
 
 const todoDeleteHandler = async (req: any, h: any) => {
