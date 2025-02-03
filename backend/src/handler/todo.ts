@@ -1,5 +1,5 @@
 import { Label, Todo, User } from "../models/model";
-import { Op } from "sequelize";
+import { Op, Sequelize } from "sequelize";
 
 
 const todoCreateHandler = async (req: any, h: any) => {
@@ -54,73 +54,54 @@ const todoCreateHandler = async (req: any, h: any) => {
 };
 
 
-const todoReadHandler = async (req: any, h: any) => {
+const todoReadHandler = async (req:any, h:any) => {
     const userId = req.auth.userId;
     const { start, end, keyword, priority, category } = req.query;
 
     try {
-        let whereClause: any = { userId };
+        let whereClause:any = { userId };
+
         if (start) {
-            // Add one day to the start date
-            const parsedStart = new Date(new Date(start));
-            parsedStart.setDate(parsedStart.getDate() + 1); // Add one day
-            const adjustedStart = parsedStart.toISOString().split('T')[0]; // Format to ISO date string
-            console.log("Parsed Start Date + 1 Day:", adjustedStart);
-            whereClause.creationDateTime = { gte: adjustedStart }; // Set greater than or equal to adjusted start
+            const parsedStart = new Date(start);
+            parsedStart.setDate(parsedStart.getDate() + 1);
+            const adjustedStart = parsedStart.toISOString().split('T')[0];
+            whereClause.creationDateTime = { [Op.gte]: adjustedStart };
         }
 
         if (end) {
-            const parsedEnd = new Date(new Date(end));
-            parsedEnd.setDate(parsedEnd.getDate() + 1); // Add one day
-            const adjustedEnd = parsedEnd.toISOString().split('T')[0]; // Format to ISO date string
-            console.log("Parsed End Date + 1 Day:", adjustedEnd);
-            // Merge with the existing `creationDateTime` condition
+            const parsedEnd = new Date(end);
+            parsedEnd.setDate(parsedEnd.getDate() + 1);
+            const adjustedEnd = parsedEnd.toISOString().split('T')[0];
             whereClause.creationDateTime = {
                 ...(whereClause.creationDateTime || {}),
-                lte: adjustedEnd, // Set less than or equal to end date
+                [Op.lte]: adjustedEnd,
             };
         }
 
         if (keyword) {
-            whereClause = {
-                ...whereClause,
-                title: {
-                    [Op.like]: `%${keyword}%`
-                }
-            }
-            console.log("Search Query:", keyword);
+            whereClause.title = { [Op.like]: `%${keyword}%` };
         }
 
         if (["1", "2", "3", "4"].includes(priority)) {
             whereClause.priority = +priority;
         }
 
-        if (category != "-1" || isNaN(category)) {
-            const categoryId = +category; // Ensure category is a number
-            if (typeof (categoryId) === "number")
-                whereClause.labels = {
-                    some: {
-                        id: categoryId, // Match category with label id
-                    },
-                };
+        if (category !== "-1" && !isNaN(category)) {
+            const categoryId = Number(category);
+            whereClause = {
+                ...whereClause,
+                [Op.and]: Sequelize.literal(`JSON_CONTAINS(labels, '${categoryId}', '$')`)
+            };
         }
 
-        console.log("Final Where Clause:", whereClause);
-
-        const allTodos = await Todo.findAll({
-            where: whereClause,
-            order: [
-                ['id', 'DESC']
-            ],
-        });
-
+        const allTodos = await Todo.findAll({ where: whereClause });
 
         return {
             message: `Successfully retrieved ${allTodos.length} todos`,
             todos: allTodos,
             others: { start, end },
         };
-    } catch (error: any) {
+    } catch (error:any) {
         console.error(error);
         return h.response({
             message: "An error occurred while reading the todos",
