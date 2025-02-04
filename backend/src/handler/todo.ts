@@ -1,4 +1,4 @@
-import { Label, Todo, User } from "../models/model";
+import { Label, Todo } from "../models/model";
 import { Op, Sequelize } from "sequelize";
 
 

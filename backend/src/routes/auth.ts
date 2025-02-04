@@ -1,7 +1,20 @@
 import { httpMethods } from "../methods";
 import { authUserRoutes } from "../constant/route";
-import { headerValidators, userParamValidators, userPayloadValidators } from "../validations/user";
-import { fetchAllUsersHandler, tokenValidHandler, userDeleteHandler, userForgotPasswordHandler, userLoginHandler, userResetPasswordHandler, userResetTokenHandler, userSignupHandler } from "../handler/user";
+import { 
+    headerValidators, 
+    userParamValidators, 
+    userPayloadValidators 
+} from "../validations/user";
+import { 
+    userLoginHandler, 
+    userSignupHandler, 
+    userDeleteHandler, 
+    tokenValidHandler, 
+    fetchAllUsersHandler, 
+    userResetTokenHandler, 
+    userResetPasswordHandler, 
+    userForgotPasswordHandler, 
+} from "../handler/user";
 
 const authRoutes = [
     {

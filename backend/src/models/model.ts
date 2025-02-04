@@ -115,9 +115,22 @@ const Label = SEQUELIZE.define(
 
 // Define associations
 User.hasMany(Todo, {foreignkey:"userId", onDelete:"CASCADE"});
+//~ "userId" is foreignkey, which is defined in target table i.e. Todo ref: source table(User).
+//~hasMany means, 1 user === many Todos
+//~onDelete:'CASCADE', i.e. child col(s). will be deleted if parent col(s). is/are deleted
+
 Todo.belongsTo(User,{foreignKey:"userId"});
+// ~belongsTo: 1 to 1 relation, foreignKey is define in source table(Todo). eg: todo-4 is associated with user_2 
+
+// !========================================================
 
 User.hasMany(Label, {foreignkey:"userId", onDelete:"CASCADE"});
+// ~hasMany: 1 user can generate multiple labels
+// ~foreignKey will be in target table(Label)
+
 Label.belongsTo(User,{foreignKey:"userId"});
+// ~belongsTo:  1 to 1 relationship, 1 label is associated with 1 user
+// ~foreignKey is defined in source model i.e. Label
+
 
 export { User, Todo, Label };
